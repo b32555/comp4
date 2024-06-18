@@ -1,0 +1,38 @@
+import numpy as np
+
+def seidel(A, b, tolerance=0.01, max_iterations=1000):
+    n = len(A)
+    x = np.zeros(n)
+    x_new = np.zeros(n)
+    iteration = 0
+    while iteration < max_iterations:
+        for i in range(n):
+            x_new[i] = b[i]
+            for j in range(n):
+                if j != i:
+                    x_new[i] -= A[i][j] * x_new[j]
+            x_new[i] /= A[i][i]
+        
+        # Проверяем условие остановки
+        if np.max(np.abs(x_new - x)) < tolerance:
+            return x_new
+        
+        x = np.copy(x_new)
+        iteration += 1
+    
+    print("Достигнуто максимальное число итераций.")
+    return x_new
+
+# Задаем матрицу коэффициентов и вектор свободных членов для системы
+A = np.array([
+    [24, 9, -1, -5],
+    [1, -14, 1, 9],
+    [7, 5, -21, 0],
+    [1, 4, 8, -22]
+])
+b = np.array([-24, -40, -84, -56])
+
+# Решаем систему методом Зейделя
+solution_seidel = seidel(A, b)
+print("Решение системы уравнений методом Зейделя:")
+print(solution_seidel)
