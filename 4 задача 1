@@ -1,0 +1,138 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+// Функция для вычисления определителя матрицы 4x4
+double determinant(const vector<vector<double>>& matrix) {
+    return matrix[0][0] * matrix[1][1] * matrix[2][2] * matrix[3][3] +
+           matrix[0][0] * matrix[1][2] * matrix[2][3] * matrix[3][1] +
+           matrix[0][0] * matrix[1][3] * matrix[2][1] * matrix[3][2] +
+           matrix[0][1] * matrix[1][0] * matrix[2][3] * matrix[3][2] +
+           matrix[0][1] * matrix[1][2] * matrix[2][0] * matrix[3][3] +
+           matrix[0][1] * matrix[1][3] * matrix[2][2] * matrix[3][0] +
+           matrix[0][2] * matrix[1][0] * matrix[2][1] * matrix[3][3] +
+           matrix[0][2] * matrix[1][1] * matrix[2][3] * matrix[3][0] +
+           matrix[0][2] * matrix[1][3] * matrix[2][0] * matrix[3][1] +
+           matrix[0][3] * matrix[1][0] * matrix[2][2] * matrix[3][1] +
+           matrix[0][3] * matrix[1][1] * matrix[2][0] * matrix[3][2] +
+           matrix[0][3] * matrix[1][2] * matrix[2][1] * matrix[3][0] -
+           matrix[0][0] * matrix[1][1] * matrix[2][3] * matrix[3][2] -
+           matrix[0][0] * matrix[1][2] * matrix[2][1] * matrix[3][3] -
+           matrix[0][0] * matrix[1][3] * matrix[2][2] * matrix[3][1] -
+           matrix[0][1] * matrix[1][0] * matrix[2][2] * matrix[3][3] -
+           matrix[0][1] * matrix[1][2] * matrix[2][3] * matrix[3][0] -
+           matrix[0][1] * matrix[1][3] * matrix[2][0] * matrix[3][2] -
+           matrix[0][2] * matrix[1][0] * matrix[2][3] * matrix[3][1] -
+           matrix[0][2] * matrix[1][1] * matrix[2][0] * matrix[3][3] -
+           matrix[0][2] * matrix[1][3] * matrix[2][1] * matrix[3][0] -
+           matrix[0][3] * matrix[1][0] * matrix[2][1] * matrix[3][2] -
+           matrix[0][3] * matrix[1][1] * matrix[2][2] * matrix[3][0] -
+           matrix[0][3] * matrix[1][2] * matrix[2][0] * matrix[3][1];
+}
+
+// Функция для замены столбца в матрице
+vector<vector<double>> replace_column(const vector<vector<double>>& matrix, const vector<double>& column, int col_index) {
+    vector<vector<double>> new_matrix = matrix;
+    for (int i = 0; i < matrix.size(); ++i) {
+        new_matrix[i][col_index] = column[i];
+    }
+    return new_matrix;
+}
+
+// Функция для выполнения прямого хода метода Гаусса
+void forward_elimination(vector<vector<double>>& augmented_matrix) {
+    int n = augmented_matrix.size();
+    
+    for (int k = 0; k < n; ++k) {
+        // Находим максимальный элемент в текущем столбце
+        int max_row = k;
+        for (int i = k + 1; i < n; ++i) {
+            if (fabs(augmented_matrix[i][k]) > fabs(augmented_matrix[max_row][k])) {
+                max_row = i;
+            }
+        }
+        
+        // Меняем местами текущую строку и строку с максимальным элементом
+        swap(augmented_matrix[k], augmented_matrix[max_row]);
+        
+        // Приводим элементы под диагональю к нулю
+        for (int i = k + 1; i < n; ++i) {
+            double factor = augmented_matrix[i][k] / augmented_matrix[k][k];
+            for (int j = k; j <= n; ++j) {
+                augmented_matrix[i][j] -= factor * augmented_matrix[k][j];
+            }
+        }
+    }
+}
+
+// Функция для выполнения обратного хода метода Гаусса
+vector<double> backward_substitution(const vector<vector<double>>& augmented_matrix) {
+    int n = augmented_matrix.size();
+    vector<double> solutions(n);
+    
+    for (int i = n - 1; i >= 0; --i) {
+        solutions[i] = augmented_matrix[i][n];
+        for (int j = i + 1; j < n; ++j) {
+            solutions[i] -= augmented_matrix[i][j] * solutions[j];
+        }
+        solutions[i] /= augmented_matrix[i][i];
+    }
+    
+    return solutions;
+}
+
+int main() {
+    // Матрица коэффициентов
+    vector<vector<double>> A = {
+        {-6, -8, -2, -8},
+        {9, 0, 8, 3},
+        {0, 9, -5, 9},
+        {-1, 4, -8, -4}
+    };
+    
+    // Вектор свободных членов
+    vector<double> B = {-32, 8, -2, -36};
+    
+    // Вычисление определителя матрицы A
+    double det_A = determinant(A);
+    
+    if (fabs(det_A) < 1e-9) {
+        cout << "Система не имеет единственного решения." << endl;
+        return 0;
+    }
+    
+    // Метод Крамера
+    cout << "Решения системы уравнений (метод Крамера):" << endl;
+    vector<double> solutions_cramer(4);
+    for (int i = 0; i < 4; ++i) {
+        vector<vector<double>> Ai = replace_column(A, B, i);
+        solutions_cramer[i] = determinant(Ai) / det_A;
+        cout << "x" << i + 1 << " = " << solutions_cramer[i] << endl;
+    }
+
+    // Метод Гаусса
+    cout << "\nРешения системы уравнений (метод Гаусса):" << endl;
+    // Матрица коэффициентов и вектор свободных членов объединены в расширенную матрицу
+    vector<vector<double>> augmented_matrix = {
+        {-6, -8, -2, -8, -32},
+        {9, 0, 8, 3, 8},
+        {0, 9, -5, 9, -2},
+        {-1, 4, -8, -4, -36}
+    };
+
+    // Прямой ход метода Гаусса
+    forward_elimination(augmented_matrix);
+    
+    // Обратный ход метода Гаусса
+    vector<double> solutions_gauss = backward_substitution(augmented_matrix);
+    
+    // Вывод решений
+    for (int i = 0; i < solutions_gauss.size(); ++i) {
+        cout << "x" << i + 1 << " = " << solutions_gauss[i] << endl;
+    }
+    
+    return 0;
+}
